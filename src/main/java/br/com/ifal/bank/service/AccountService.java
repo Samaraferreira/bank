@@ -222,4 +222,29 @@ public class AccountService {
             throw new RuntimeException("Houve um erro inesperado. Não foi possível realizar o pagamento do seu débito");
         }
     }
+
+    public void deleteSavingAccount(Account account, String cpf) {
+        if(!cpf.equals(account.getCpf())){
+            throw new RuntimeException("O CPF está incorreto!");
+        }
+
+        try {
+            accountRepository.deleteSavingAccount(account.getCpf());
+        }catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public void deleteCheckingAccount(Account account, String cpf) {
+        if(!cpf.equals(account.getCpf())){
+            throw new RuntimeException("O CPF está incorreto!");
+        }
+
+        try {
+            accountRepository.deleteCheckingAccount(account.getCpf());
+        }catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
 }

@@ -1,38 +1,44 @@
 package br.com.ifal.bank.controller;
 
 import br.com.ifal.bank.model.Account;
+import br.com.ifal.bank.model.History;
 import br.com.ifal.bank.repository.AccountRepository;
+import br.com.ifal.bank.repository.HistoryRepository;
 import br.com.ifal.bank.service.AccountService;
 import br.com.ifal.bank.service.AuthenticationService;
+import br.com.ifal.bank.service.HistoryService;
 
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
     static Scanner scan = new Scanner(System.in);
+    static Scanner stringScan = new Scanner(System.in);
     static AuthenticationService authenticationService = new AuthenticationService(new AccountRepository());
     static AccountService accountService = new AccountService(new AccountRepository());
+    static HistoryService historyService = new HistoryService(new HistoryRepository());
 
     public static void main(String[] args) {
         int opInicio;
 
-        for (;;) {
+        for (; ; ) {
             try {
                 System.out.println("""
-                        
+                                                
                         --- Banco Gringotts ---
-                        
+                                                
                         1 - Login
                         2 - Abrir conta
                         0 - Sair""");
                 System.out.print("Selecione uma opção --> ");
                 //impede o loop infinito
-                opInicio = Integer.parseInt(scan.nextLine());
+                opInicio = Integer.parseInt(stringScan.nextLine());
 
                 if (opInicio == 0) {
                     break;
                 }
 
-                if(opInicio < 0 || opInicio > 2) {
+                if (opInicio < 0 || opInicio > 2) {
                     throw new IllegalArgumentException("Informe uma opção válida!");
                 }
 
@@ -41,20 +47,20 @@ public class Main {
                         try {
                             System.out.println("\n-- Login");
                             System.out.println("""
-                                    
+                                                                        
                                     Informe o tipo da conta que deseja logar:
                                     CP - Conta Poupança
                                     CC - Conta Corrente""");
 
                             System.out.print("Tipo --> ");
-                            String typeAccountAuthentication = scan.nextLine(); //+ scan.nextLine()
+                            String typeAccountAuthentication = stringScan.nextLine(); //+ scan.nextLine()
 
                             if (!authenticationService.isValidAuthenticationType(typeAccountAuthentication)) {
                                 throw new IllegalArgumentException("Informe um tipo válido de conta!");
                             }
 
                             System.out.print("CPF do proprietário da conta --> ");
-                            String cpf = scan.nextLine();
+                            String cpf = stringScan.nextLine();
 
                             Account account = authenticationService.authentication(typeAccountAuthentication, cpf);
                             accessAccount(account);
@@ -74,7 +80,7 @@ public class Main {
 
                             if (opOpenAccount == 1) {
                                 System.out.println(accountService.addSavingsAccount());
-                            } else if (opOpenAccount == 2){
+                            } else if (opOpenAccount == 2) {
                                 System.out.println(accountService.addCheckingAccount());
                             } else {
                                 throw new IllegalArgumentException("Informe uma opção válida");
@@ -98,7 +104,7 @@ public class Main {
         int op = -1;
 
         do {
-            try{
+            try {
                 System.out.println("\n\n-- Acesso a conta ");
                 System.out.println("\nBem vindo(a), " + account.getName() + "\n");
                 System.out.print("""
@@ -106,22 +112,26 @@ public class Main {
                         1 - Realizar depósito
                         2 - Realizar saque
                         3 - Editar dados da conta""");
-                if(account.getType().equals("CC")){
+                if (account.getType().equals("CC")) {
                     System.out.print("""
 
                             4 - Solicitar crédito
                             5 - Pagar emprestimo""");
                 }
-                System.out.println("\n0 - Logout");
+                System.out.println("""
+                                                
+                        8 - Consultar historico da conta
+                        9 - Deletar conta
+                        0 - Logout""");
                 System.out.print("Selecione uma opção: ");
-                op = Integer.parseInt(scan.nextLine());
+                op = Integer.parseInt(stringScan.nextLine());
 
-                if(account.getType().equals("CC")) {
-                    if(op < 0 || op > 5){
+                if (account.getType().equals("CC")) {
+                    if (op < 0 || op > 5 && op != 9 && op != 8) {
                         throw new IllegalArgumentException("Informe uma opção válida!");
                     }
-                } else{
-                    if(op < 0 || op > 3){
+                } else {
+                    if (op < 0 || op > 4 && op != 9 && op != 8) {
                         throw new IllegalArgumentException("Informe uma opção válida!");
                     }
                 }
@@ -144,7 +154,7 @@ public class Main {
 
                     case 3 -> {
                         System.out.print("CPF do proprietário da conta --> ");
-                        String cpf = scan.nextLine();
+                        String cpf = stringScan.nextLine();
 
                         account = accountService.editAccount(account, cpf);
 
@@ -161,17 +171,48 @@ public class Main {
                         System.out.println("Débito atual: R$ " + accountService.showDebitAccount(account.getCpf()) + "\n");
 
                         System.out.print("Informe o cpf do proprietário da conta: ");
-                        String cpf = scan.nextLine();
+                        String cpf = stringScan.nextLine();
 
                         System.out.print("informe o valor que deseja abater da dívida: ");
-                        double value = Double.parseDouble(scan.nextLine());
+                        double value = Double.parseDouble(stringScan.nextLine());
 
                         System.out.println("Pagamento realizado com sucesso!" +
                                 "\nDébito restante: R$ " + accountService.payDebitAccount(cpf, value, account));
                     }
+                    case 8 -> {
+                        ArrayList<History> histories = historyService.getHistory(account);
+                        System.out.printf("\nUsuário: %s\n" +
+                                "CPF: %s", account.getName(), account.getCpf());
+                        histories.forEach(history -> {
+                            System.out.printf("""
+                                                                       
+                                    Tipo de conta: %s
+                                    Movimentação: %s
+                                    Data de criação: %s""",  history.getType(), history.getMovement(), history.getCreateAt());
+                        });
+                    }
+
+                    case 9 -> {
+                        System.out.print("Informe o cpf do proprietário da conta: ");
+                        String cpf = stringScan.nextLine();
+
+                        System.out.print("""
+                                Tem Certeza?
+                                1 - Sim
+                                2 - Não
+                                """);
+                        op = scan.nextInt();
+                        if (op == 1) {
+                            if (account.getType().equals("CP")) accountService.deleteSavingAccount(account, cpf);
+                            else accountService.deleteCheckingAccount(account, cpf);
+
+                            System.exit(0);
+
+                        }
+                    }
                 }
 
-            } catch (Exception e){
+            } catch (Exception e) {
                 if (e.getMessage() == null) {
                     System.out.println("O tipo do valor informado é diferente do solicitado!");
                 } else {
@@ -179,6 +220,6 @@ public class Main {
                 }
             }
 
-        } while(op != 0);
+        } while (op != 0);
     }
 }

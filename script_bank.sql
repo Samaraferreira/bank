@@ -29,6 +29,14 @@ create table credit_checking_account(
 	debit_balance double precision
 );
 
+-- TABELA DE HISTORICO
+create table history(
+    cpf_account varchar(11),
+    type_account char(2),
+    created_at timestamp default NOW(),
+    movement varchar(200)
+);
+
 select * from credit_checking_account cca;
 
 select * from savings_account sa;
