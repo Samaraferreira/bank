@@ -1,34 +1,18 @@
 package br.com.ifal.bank.model;
 
 public abstract class Account {
-    private String name;
-    private String cpf;
-    private String birthDate;
+
+    private Owner owner;
+
     private double balance;
     private String type;
 
-    public String getName() {
-        return name;
+    public Owner getOwner() {
+        return owner;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getCpf() {
-        return cpf;
-    }
-
-    public void setCpf(String cpf) {
-        this.cpf = cpf;
-    }
-
-    public String getBirthDate() {
-        return birthDate;
-    }
-
-    public void setBirthDate(String birthDate) {
-        this.birthDate = birthDate;
+    public void setOwner(Owner owner) {
+        this.owner = owner;
     }
 
     public double getBalance() {

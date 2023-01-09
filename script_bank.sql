@@ -1,28 +1,32 @@
 CREATE database bank;
 use bank;
 
+create table owner(
+	cpf varchar(11) primary key,
+	name varchar(200),
+	birthDate char(10)
+);
+
 -- CONTA POUPANCA
 create table savings_account(
 	id serial primary key,
-	client_name varchar(200),
-	cpf char(11),
-	birthDate char(10),
+	owner_id varchar(11),
 	balance double precision,
-	type_account char(2)
+	type_account char(2),
+	CONSTRAINT fk_owner FOREIGN KEY(owner_id) REFERENCES owner(cpf)
 );
 
 -- CONTA CORRENTE
 create table checking_account(
 	id serial primary key,
-	client_name varchar(200),
-	cpf char(11),
-	birthDate char(10),
+	owner_id varchar(11),
 	balance double precision,
-	type_account char(2)
+	type_account char(2),
+	CONSTRAINT fk_owner FOREIGN KEY(owner_id) REFERENCES owner(cpf)
 );
 
 
--- TABELA DE CŔÉDITO DA CONTA CORRENTE
+-- TABELA DE CRÉDITO DA CONTA CORRENTE
 create table credit_checking_account(
 	id serial primary key,
 	cpf_account varchar(11),

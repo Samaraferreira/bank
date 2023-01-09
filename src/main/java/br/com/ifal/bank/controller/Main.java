@@ -2,15 +2,17 @@ package br.com.ifal.bank.controller;
 
 import br.com.ifal.bank.model.Account;
 import br.com.ifal.bank.repository.AccountRepository;
+import br.com.ifal.bank.repository.OwnerRepository;
 import br.com.ifal.bank.service.AccountService;
 import br.com.ifal.bank.service.AuthenticationService;
 
 import java.util.Scanner;
 
 public class Main {
+
     static Scanner scan = new Scanner(System.in);
     static AuthenticationService authenticationService = new AuthenticationService(new AccountRepository());
-    static AccountService accountService = new AccountService(new AccountRepository());
+    static AccountService accountService = new AccountService(new AccountRepository(), new OwnerRepository());
 
     public static void main(String[] args) {
         int opInicio = -1;
@@ -99,7 +101,7 @@ public class Main {
         do {
             try{
                 System.out.println("\n\n-- Acesso a conta ");
-                System.out.println("\nBem vindo(a), " + account.getName() + "\n");
+                System.out.println("\nBem vindo(a), " + account.getOwner().getName() + "\n");
                 System.out.print("""
                         Menu:
                         1 - Realizar depósito
@@ -145,7 +147,7 @@ public class Main {
                     }
                     case 4 -> {
                         System.out.println("Pagar emprestimo\n");
-                        System.out.println("Débito atual: R$ " + accountService.showDebitAccount(account.getCpf()) + "\n");
+                        System.out.println("Débito atual: R$ " + accountService.showDebitAccount(account.getOwner().getCpf()) + "\n");
                         System.out.print("informe o valor que deseja abater da dívida: ");
                     }
                 }

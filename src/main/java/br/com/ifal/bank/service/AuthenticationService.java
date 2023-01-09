@@ -18,7 +18,7 @@ public class AuthenticationService {
     }
 
     public Account authentication(String accountType, String cpf) throws Exception {
-        Account account = accountRepository.validationAccount(accountType, cpf);
+        Account account = accountRepository.validateAccount(accountType, cpf);
         if(account != null){
             return account;
         } else {
