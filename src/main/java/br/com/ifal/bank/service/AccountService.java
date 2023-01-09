@@ -194,24 +194,24 @@ public class AccountService {
     }
 
     public void deleteSavingAccount(Account account, String cpf) {
-        if(!cpf.equals(account.getCpf())){
+        if(!cpf.equals(account.getOwner().getCpf())){
             throw new RuntimeException("O CPF está incorreto!");
         }
 
         try {
-            accountRepository.deleteSavingAccount(account.getCpf());
+            accountRepository.deleteSavingAccount(account.getOwner().getCpf());
         }catch (Exception e) {
             System.out.println(e.getMessage());
         }
     }
 
     public void deleteCheckingAccount(Account account, String cpf) {
-        if(!cpf.equals(account.getCpf())){
+        if(!cpf.equals(account.getOwner().getCpf())){
             throw new RuntimeException("O CPF está incorreto!");
         }
 
         try {
-            accountRepository.deleteCheckingAccount(account.getCpf());
+            accountRepository.deleteCheckingAccount(account.getOwner().getCpf());
         }catch (Exception e) {
             System.out.println(e.getMessage());
         }

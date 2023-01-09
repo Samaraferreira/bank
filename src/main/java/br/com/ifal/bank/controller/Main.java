@@ -173,7 +173,7 @@ public class Main {
                     case 8 -> {
                         ArrayList<History> histories = historyService.getHistory(account);
                         System.out.printf("\nUsuário: %s\n" +
-                                "CPF: %s", account.getName(), account.getCpf());
+                                "CPF: %s", account.getOwner().getName(), account.getOwner().getCpf());
                         histories.forEach(history -> {
                             System.out.printf("""
                                                                        

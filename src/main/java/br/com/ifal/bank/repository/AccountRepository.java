@@ -3,6 +3,7 @@ package br.com.ifal.bank.repository;
 import br.com.ifal.bank.database.BuidConection;
 import br.com.ifal.bank.model.Account;
 import br.com.ifal.bank.model.CheckingAccount;
+import br.com.ifal.bank.model.Owner;
 import br.com.ifal.bank.model.SavingsAccount;
 
 import java.sql.Connection;
@@ -12,7 +13,7 @@ import java.sql.SQLException;
 
 public class AccountRepository {
 
-    public Integer insertSavingsAccount(String ownerId, double balance, String type){
+    public Integer insertSavingsAccount(String ownerId, double balance, String type) {
         Connection con = new BuidConection().getCon();
 
         Integer accountID = null;
@@ -20,6 +21,8 @@ public class AccountRepository {
         ResultSet rs = null;
 
         String insertAccountQuery = "insert into savings_account(owner_id, balance, type_account) values(?,?,?) returning id";
+
+        String insertHistory = "Insert into history(type_account, movement) values (?,?)";
 
         try {
 
@@ -38,22 +41,21 @@ public class AccountRepository {
             ps = con.prepareStatement(insertHistory);
 
             String movement = "Criação de conta poupança";
-            ps.setString(1, cpf);
-            ps.setString(2, type);
-            ps.setString(3, movement);
+            ps.setString(1, type);
+            ps.setString(2, movement);
 
             ps.execute();
 
             ps.close();
             con.close();
             return accountID;
-        } catch(Exception e){
+        } catch (Exception e) {
             System.out.println(e.getMessage());
             return accountID;
         }
     }
 
-    public Integer insertCheckingAccount(String ownerId, double balance, String type){
+    public Integer insertCheckingAccount(String ownerId, double balance, String type) {
 
         Connection con = new BuidConection().getCon();
 
@@ -63,7 +65,9 @@ public class AccountRepository {
 
         String insertAccountQuery = "insert into checking_account(owner_id, balance, type_account) values(?,?,?) returning id";
 
-        try{
+        String insertHistory = "Insert into history(type_account, movement) values (?,?)";
+
+        try {
             ps = con.prepareStatement(insertAccountQuery);
             ps.setString(1, ownerId);
             ps.setDouble(2, balance);
@@ -77,22 +81,21 @@ public class AccountRepository {
             ps = con.prepareStatement(insertHistory);
 
             String movement = "Criação de conta corrente";
-            ps.setString(1, cpf);
-            ps.setString(2, type);
-            ps.setString(3, movement);
+            ps.setString(1, type);
+            ps.setString(2, movement);
 
             ps.execute();
 
             ps.close();
             con.close();
             return accountID;
-        }catch(Exception e){
+        } catch (Exception e) {
             System.out.println(e.getMessage());
             return accountID;
         }
     }
 
-    public double depositAccount(String type, String cpf, double value){
+    public double depositAccount(String type, String cpf, double value) {
 
         Connection con = new BuidConection().getCon();
 
@@ -107,7 +110,7 @@ public class AccountRepository {
         String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
         try {
 
-            if(type.equals("CP")) {
+            if (type.equals("CP")) {
                 String updateBalanceSavingsQuery = "update savings_account set balance = ? where owner_id = ? returning balance";
                 String selectBalanceSavingsQuery = "select balance from savings_account where owner_id = ?";
 
@@ -130,7 +133,7 @@ public class AccountRepository {
 
                 ps.setString(2, cpf);
 
-            } else if(type.equals("CC")) {
+            } else if (type.equals("CC")) {
                 String updateBalanceCheckingQuery = "update checking_account set balance = ? where owner_id = ? returning balance";
                 String selectBalanceCheckingQuery = "select balance from checking_account where owner_id = ?";
 
@@ -159,7 +162,7 @@ public class AccountRepository {
 
             ps = con.prepareStatement(insertHistory);
 
-            String movement = "Deposito de R$" + value +" na conta";
+            String movement = "Deposito de R$" + value + " na conta";
             ps.setString(1, cpf);
             ps.setString(2, type);
             ps.setString(3, movement);
@@ -170,15 +173,15 @@ public class AccountRepository {
             con.close();
 
             return currentBalance;
-        }catch(Exception e){
-            if(!e.getMessage().equals("No results were returned by the query.")){
+        } catch (Exception e) {
+            if (!e.getMessage().equals("No results were returned by the query.")) {
                 System.out.println(e.getMessage());
             }
             return currentBalance;
         }
     }
 
-    public double withdrawAccount(String type, String cpf, double value){
+    public double withdrawAccount(String type, String cpf, double value) {
 
         Connection con = new BuidConection().getCon();
 
@@ -186,8 +189,11 @@ public class AccountRepository {
         PreparedStatement ps = null;
         ResultSet rs = null;
 
-        try{
-            if(type.equals("CP")) {
+
+        String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
+
+        try {
+            if (type.equals("CP")) {
                 String updateBalanceSavingsQuery = "update savings_account set balance = ? where owner_id = ? returning balance";
                 String selectBalanceSavingsQuery = "select balance from savings_account where owner_id = ?";
 
@@ -206,7 +212,7 @@ public class AccountRepository {
 
                 ps = con.prepareStatement(updateBalanceSavingsQuery);
 
-                if(balanceSavings < value){
+                if (balanceSavings < value) {
                     throw new ArithmeticException("O valor do saque não pode ser maior que o saldo!");
                 }
 
@@ -215,7 +221,7 @@ public class AccountRepository {
 
                 ps.setString(2, cpf);
 
-            } else if(type.equals("CC")) {
+            } else if (type.equals("CC")) {
                 String updateBalanceCheckingQuery = "update checking_account set balance = ? where owner_id = ? returning balance";
                 String selectBalanceCheckingQuery = "select balance from checking_account where owner_id = ?";
 
@@ -234,7 +240,7 @@ public class AccountRepository {
 
                 ps = con.prepareStatement(updateBalanceCheckingQuery);
 
-                if(balanceCheckings < value){
+                if (balanceCheckings < value) {
                     throw new ArithmeticException("O valor do saque não pode ser maior que o saldo!");
                 }
 
@@ -249,7 +255,7 @@ public class AccountRepository {
 
             ps = con.prepareStatement(insertHistory);
 
-            String movement = "Saque de R%"+ value + " da conta";
+            String movement = "Saque de R%" + value + " da conta";
             ps.setString(1, cpf);
             ps.setString(2, type);
             ps.setString(3, movement);
@@ -263,15 +269,15 @@ public class AccountRepository {
             con.close();
 
             return currentBalance;
-        }catch(Exception e){
-            if(!e.getMessage().equals("No results were returned by the query.")){
+        } catch (Exception e) {
+            if (!e.getMessage().equals("No results were returned by the query.")) {
                 System.out.println(e.getMessage());
             }
             return currentBalance;
         }
     }
 
-    public Account validationAccount(String type, String cpf){
+    public Account validationAccount(String type, String cpf) {
 
         Connection con = new BuidConection().getCon();
 
@@ -281,8 +287,9 @@ public class AccountRepository {
         String selectCheckingOwnerQuery = "select name, cpf, birthdate from checking_account ca inner join owner on (ca.owner_id = owner.cpf) where owner_id = ?";
         Account account = null;
 
-        try{
-            if(type.equals("CP")){
+        String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
+        try {
+            if (type.equals("CP")) {
                 ps = con.prepareStatement(selectSavingsOwnerQuery);
 
                 ps.setString(1, cpf);
@@ -290,19 +297,19 @@ public class AccountRepository {
 
                 rs = ps.executeQuery();
 
-                if(rs.next()){
+                if (rs.next()) {
                     Owner owner = new Owner(rs.getString("name"), rs.getString("cpf"), rs.getString("birthdate"));
                     account = new SavingsAccount(owner);
                 }
 
                 ps.close();
-            }else if(type.equals("CC")){
+            } else if (type.equals("CC")) {
                 ps = con.prepareStatement(selectCheckingOwnerQuery);
                 ps.setString(1, cpf);
 
                 rs = ps.executeQuery();
 
-                if(rs.next()){
+                if (rs.next()) {
                     Owner owner = new Owner(rs.getString("name"), rs.getString("cpf"), rs.getString("birthdate"));
                     account = new CheckingAccount(owner);
                 }
@@ -313,15 +320,15 @@ public class AccountRepository {
             con.close();
             return account;
 
-        }catch(Exception e){
-            if(!e.getMessage().equals("No results were returned by the query.")){
+        } catch (Exception e) {
+            if (!e.getMessage().equals("No results were returned by the query.")) {
                 System.out.println(e.getMessage());
             }
             return account;
         }
     }
 
-    public Double getCredit(String cpf, double value){
+    public Double getCredit(String cpf, double value) {
         Connection con = new BuidConection().getCon();
 
         PreparedStatement ps = null;
@@ -333,293 +340,316 @@ public class AccountRepository {
         String sqlSelect = "select debit_balance from credit_checking_account where cpf_account = ?";
         String sqlInsert = "insert into credit_checking_account(cpf_account, debit_balance)" +
                 "values(?,?) returning debit_balance";
-        try{
+
+        String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
+
+        try {
             ps = con.prepareStatement(sqlValidation);
 
             ps.setString(1, cpf);
 
             rs = ps.executeQuery();
 
-            if(rs.next()){
+            if (rs.next()) {
                 idClient = rs.getString("owner_id");
             }
 
             ps.close();
 
-            if(idClient == null){
+            if (idClient == null) {
                 throw new SQLException("Não existe nenhuma conta corrente registrada com esse cpf!");
-            }else{
+            } else {
                 ps = con.prepareStatement(sqlSelect);
 
                 ps.setString(1, cpf);
 
                 rs = ps.executeQuery();
-                if(rs != null){
-                    if(rs.next()){
+                if (rs != null) {
+                    if (rs.next()) {
                         credit = rs.getDouble("debit_balance");
                     }
 
                     ps.close();
 
-                    ps = con.prepareStatement(sqlUpdate);
+                    ps = con.prepareStatement(sqlInsert);
 
-                    if((credit + value) > 10000){
+                    if ((credit + value) > 10000) {
                         throw new ArithmeticException("Limite máximo de crédito atingido. Pague sua fatura ou tente solicitar um valor menor");
-                    }else{
+                    } else {
                         ps.setDouble(1, credit + value);
                         ps.setString(2, cpf);
 
                         rs = ps.executeQuery();
 
-                        if(rs.next()){
+                        if (rs.next()) {
                             credit = rs.getDouble("debit_balance");
                         }
 
                         ps.close();
+                        ps = con.prepareStatement(insertHistory);
+
+                        String movement = "Consulta do saldo no valor deR$" + credit + value;
+                        ps.setString(1, cpf);
+                        ps.setString(2, movement);
+
+                        ps.execute();
+
+                        ps.close();
                         con.close();
 
-                }
-                ps = con.prepareStatement(sqlInsert);
-
-                if((credit + value) > 10000){
-                    throw new ArithmeticException("Limite máximo de crédito atingido. Pague sua fatura ou tente solicitar um valor menor");
-                }else{
-                    ps.setString(1, cpf);
-                    ps.setDouble(2, value);
-
-                    rs = ps.executeQuery();
-
-                    if(rs.next()){
-                        credit = rs.getDouble("debit_balance");
                     }
+                    ps = con.prepareStatement(sqlInsert);
 
-                    ps.close();
-                    con.close();
+                    if ((credit + value) > 10000) {
+                        throw new ArithmeticException("Limite máximo de crédito atingido. Pague sua fatura ou tente solicitar um valor menor");
+                    } else {
+                        ps.setString(1, cpf);
+                        ps.setDouble(2, value);
+
+                        rs = ps.executeQuery();
+
+                        if (rs.next()) {
+                            credit = rs.getDouble("debit_balance");
+                        }
+
+                        ps.close();
+                        ps = con.prepareStatement(insertHistory);
+
+                        String movement = "Consulta do saldo no valor deR$" + value;
+                        ps.setString(1, cpf);
+                        ps.setString(2, movement);
+
+                        ps.execute();
+
+                        ps.close();
+                        con.close();
+                    }
                 }
+
+
+
+                return credit;
+
             }
-
-
-            return credit;
-
-        }catch(Exception e){
-            if(!e.getMessage().equals("No results were returned by the query.")){
+        } catch (Exception e) {
+            if (!e.getMessage().equals("No results were returned by the query.")) {
                 System.out.println(e.getMessage());
             }
             return credit;
         }
     }
+        public double showDebit (String cpf){
+            Connection con = new BuidConection().getCon();
+            PreparedStatement ps = null;
+            ResultSet rs = null;
+            double debit = 0;
 
-    public double showDebit(String cpf){
+            String sqlSelect = "select debit_balance from credit_checking_account where cpf_account = ?";
 
-        Connection con = new BuidConection().getCon();
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        double debit = 0;
+            String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
 
-        String sqlSelect = "select debit_balance from credit_checking_account where cpf_account = ?";
+            try {
+                ps = con.prepareStatement(sqlSelect);
 
-        try {
-            ps = con.prepareStatement(sqlSelect);
-
-            ps.setString(1, cpf);
-
-            rs = ps.executeQuery();
-
-            if(rs.next()){
-                debit = rs.getDouble("debit_balance");
-            }
-
-            ps.close();
-            ps = con.prepareStatement(insertHistory);
-
-            String movement = "Consulta do saldo no valor deR$"+ debit;
-            ps.setString(1, cpf);
-            ps.setString(2, movement);
-
-            ps.execute();
-
-            ps.close();
-            con.close();
-
-            return debit;
-        }catch (Exception e){
-            if(!e.getMessage().equals("No results were returned by the query.")){
-                System.out.println(e.getMessage());
-                debit = -1;
-            }
-            return debit;
-        }
-
-    }
-
-    public double payDebit(String cpf, double value){
-        Connection con = new BuidConection().getCon();
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        double balance = 0;
-        double debit = 0;
-
-        String sqlSelect = "select debit_balance db, balance b from credit_checking_account " +
-                "inner join checking_account on cpf_account = owner_id where cpf_account = ?";
-        String sqlUpdateCredit = "update credit_checking_account set debit_balance = ? where cpf_account = ? returning debit_balance";
-        String sqlUpdateAccount = "update checking_account set balance = ? where owner_id = ?";
-
-        String insertHistory = "Insert into history(cpf_account, movement) values (?,?)";
-
-        try {
-
-            ps = con.prepareStatement(sqlSelect);
-            if (cpf.length() != 11) {
-                throw new ArithmeticException("O CPF precisa ser composto de 11 números!");
-            } else {
                 ps.setString(1, cpf);
+
+                rs = ps.executeQuery();
+
+                if (rs.next()) {
+                    debit = rs.getDouble("debit_balance");
+                }
+
+                ps.close();
+                ps = con.prepareStatement(insertHistory);
+
+                String movement = "Consulta do saldo no valor deR$" + debit;
+                ps.setString(1, cpf);
+                ps.setString(2, movement);
+
+                ps.execute();
+
+                ps.close();
+                con.close();
+
+                return debit;
+            } catch (Exception e) {
+                if (!e.getMessage().equals("No results were returned by the query.")) {
+                    System.out.println(e.getMessage());
+                    debit = -1;
+                }
+                return debit;
             }
 
-            rs = ps.executeQuery();
+        }
 
-            if (rs.next()) {
-                balance = rs.getDouble("b");
-                debit = rs.getDouble("db");
-            }
+        public double payDebit (String cpf,double value){
+            Connection con = new BuidConection().getCon();
+            PreparedStatement ps = null;
+            ResultSet rs = null;
+            double balance = 0;
+            double debit = 0;
 
-            ps.close();
+            String sqlSelect = "select debit_balance db, balance b from credit_checking_account " +
+                    "inner join checking_account on cpf_account = owner_id where cpf_account = ?";
+            String sqlUpdateCredit = "update credit_checking_account set debit_balance = ? where cpf_account = ? returning debit_balance";
+            String sqlUpdateAccount = "update checking_account set balance = ? where owner_id = ?";
 
-            ps = con.prepareStatement(sqlUpdateCredit);
+            String insertHistory = "Insert into history(cpf_account, movement) values (?,?)";
 
-            if(value > balance){
-                throw new ArithmeticException("Vocẽ não possuí saldo suficiente para realizar o pagamento");
-            }else{
-                balance = balance - value;
-            }
+            try {
 
-            if(debit < value){
-                throw new ArithmeticException("O valor do pagamento não pode ser superior a débito existente");
-            }else{
-                debit = debit - value;
-            }
+                ps = con.prepareStatement(sqlSelect);
+                if (cpf.length() != 11) {
+                    throw new ArithmeticException("O CPF precisa ser composto de 11 números!");
+                } else {
+                    ps.setString(1, cpf);
+                }
 
-            ps.setDouble(1, debit);
-            ps.setString(2, cpf);
+                rs = ps.executeQuery();
 
-            rs = ps.executeQuery();
+                if (rs.next()) {
+                    balance = rs.getDouble("b");
+                    debit = rs.getDouble("db");
+                }
 
-            if(rs.next()){
-                debit = rs.getDouble(("debit_balance"));
-            }
+                ps.close();
 
-            ps.close();
+                ps = con.prepareStatement(sqlUpdateCredit);
 
-            ps = con.prepareStatement(sqlUpdateAccount);
+                if (value > balance) {
+                    throw new ArithmeticException("Vocẽ não possuí saldo suficiente para realizar o pagamento");
+                } else {
+                    balance = balance - value;
+                }
 
-            ps.setDouble(1, balance);
-            ps.setString(2, cpf);
+                if (debit < value) {
+                    throw new ArithmeticException("O valor do pagamento não pode ser superior a débito existente");
+                } else {
+                    debit = debit - value;
+                }
 
-            ps.executeQuery();
+                ps.setDouble(1, debit);
+                ps.setString(2, cpf);
+
+                rs = ps.executeQuery();
+
+                if (rs.next()) {
+                    debit = rs.getDouble(("debit_balance"));
+                }
+
+                ps.close();
+
+                ps = con.prepareStatement(sqlUpdateAccount);
+
+                ps.setDouble(1, balance);
+                ps.setString(2, cpf);
+
+                ps.executeQuery();
 
 
-            ps.close();
-            ps = con.prepareStatement(insertHistory);
+                ps.close();
+                ps = con.prepareStatement(insertHistory);
 
-            String movement = "Pagamento no valor de R$"+ value;
-            ps.setString(1, cpf);
-            ps.setString(2, movement);
+                String movement = "Pagamento no valor de R$" + value;
+                ps.setString(1, cpf);
+                ps.setString(2, movement);
 
-            ps.execute();
+                ps.execute();
 
-            ps.close();
-            con.close();
+                ps.close();
+                con.close();
 
-            return debit;
+                return debit;
 
-        }catch(Exception e){
-            if(!e.getMessage().equals("No results were returned by the query.")){
+            } catch (Exception e) {
+                if (!e.getMessage().equals("No results were returned by the query.")) {
+                    System.out.println(e.getMessage());
+                    debit = -1;
+                }
                 System.out.println(e.getMessage());
-                debit = -1;
+                return debit;
             }
-            System.out.println(e.getMessage());
-            return debit;
-        }
-    }
-
-    public void deleteSavingAccount(String cpf) {
-
-        Connection con = new BuidConection().getCon();
-
-        PreparedStatement ps = null;
-
-        String sqlDelete = "DELETE FROM savings_account WHERE cpf = ?";
-
-        String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
-
-        try {
-
-            if (cpf.length() != 11) {
-                throw new ArithmeticException("O CPF precisa ser composto de 11 números!");
-            }
-
-            ps = con.prepareStatement(sqlDelete);
-
-            ps.setString(1, cpf);
-
-            ps.execute();
-
-            System.out.println("Conta deletada com sucesso");
-
-            ps = con.prepareStatement(insertHistory);
-
-            String movement = "Deletamento da conta poupança";
-            ps.setString(1, cpf);
-            ps.setString(2, "CP");
-            ps.setString(3, movement);
-
-            ps.execute();
-
-            ps.close();
-            con.close();
-
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
         }
 
-    }
+        public void deleteSavingAccount (String cpf){
 
-    public void deleteCheckingAccount(String cpf) {
-        Connection con = new BuidConection().getCon();
+            Connection con = new BuidConection().getCon();
 
-        PreparedStatement ps = null;
+            PreparedStatement ps = null;
 
-        String sqlDelete = "DELETE FROM checking_account WHERE cpf = ?";
-        String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
-        try {
-            if (cpf.length() != 11) {
-                throw new ArithmeticException("O CPF precisa ser composto de 11 números!");
+            String sqlDelete = "DELETE FROM savings_account WHERE cpf = ?";
+
+            String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
+
+            try {
+
+                if (cpf.length() != 11) {
+                    throw new ArithmeticException("O CPF precisa ser composto de 11 números!");
+                }
+
+                ps = con.prepareStatement(sqlDelete);
+
+                ps.setString(1, cpf);
+
+                ps.execute();
+
+                System.out.println("Conta deletada com sucesso");
+
+                ps = con.prepareStatement(insertHistory);
+
+                String movement = "Deletamento da conta poupança";
+                ps.setString(1, cpf);
+                ps.setString(2, "CP");
+                ps.setString(3, movement);
+
+                ps.execute();
+
+                ps.close();
+                con.close();
+
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
             }
 
-            ps = con.prepareStatement(sqlDelete);
-
-            ps.setString(1, cpf);
-
-            ps.execute();
-
-            System.out.println("Conta deletada com sucesso");
-
-            ps.close();
-
-            ps = con.prepareStatement(insertHistory);
-
-            String movement = "Deletamento da conta corrente";
-            ps.setString(1, cpf);
-            ps.setString(2, "CC");
-            ps.setString(3, movement);
-
-            ps.execute();
-
-            ps.close();
-            con.close();
-
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
         }
 
+        public void deleteCheckingAccount (String cpf){
+            Connection con = new BuidConection().getCon();
+
+            PreparedStatement ps = null;
+
+            String sqlDelete = "DELETE FROM checking_account WHERE cpf = ?";
+            String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
+            try {
+                if (cpf.length() != 11) {
+                    throw new ArithmeticException("O CPF precisa ser composto de 11 números!");
+                }
+
+                ps = con.prepareStatement(sqlDelete);
+
+                ps.setString(1, cpf);
+
+                ps.execute();
+
+                System.out.println("Conta deletada com sucesso");
+
+                ps.close();
+
+                ps = con.prepareStatement(insertHistory);
+
+                String movement = "Deletamento da conta corrente";
+                ps.setString(1, cpf);
+                ps.setString(2, "CC");
+                ps.setString(3, movement);
+
+                ps.execute();
+
+                ps.close();
+                con.close();
+
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+
+        }
     }
-}
