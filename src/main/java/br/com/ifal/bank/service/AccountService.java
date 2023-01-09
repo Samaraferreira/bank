@@ -109,7 +109,7 @@ public class AccountService {
         }
     }
 
-    public double withdraw(String type){
+    public double withdraw(Account account) {
 
         System.out.println("Saque");
         System.out.println();
@@ -123,7 +123,7 @@ public class AccountService {
             throw new IllegalArgumentException("O CPF precisa ser composto de 11 números!");
         }
 
-        double currentBalance = accountRepository.withdrawAccount(type, cpf, value);
+        double currentBalance = accountRepository.withdrawAccount(account.getType(), cpf, value);
         if(currentBalance != 0){
             return currentBalance;
         }else{
@@ -131,7 +131,7 @@ public class AccountService {
         }
     }
 
-    public double credit() {
+    public double credit(Account account) {
 
         System.out.println("Sistema de liberação de crédito\n");
 
@@ -139,6 +139,11 @@ public class AccountService {
         String cpf = scan.nextLine();
         System.out.print("Valor do cŕedito: ");
         double value = Double.parseDouble(scan.nextLine());
+
+        if(!cpf.equals(account.getOwner().getCpf())){
+            throw new RuntimeException("O CPF está incorreto!");
+        }
+
         Credit c = new Credit(cpf, value);
 
         if(!isValidCpf(cpf)) {
@@ -170,4 +175,21 @@ public class AccountService {
         }
     }
 
+    public double payDebitAccount(String cpf, double value, Account account){
+
+        if(!cpf.equals(account.getOwner().getCpf())){
+            throw new RuntimeException("O CPF está incorreto!");
+        }
+
+        if(value <= 0){
+            throw new ArithmeticException("O valor do depósito tem que ser maior que 0!");
+        }
+
+        double debitValue = accountRepository.payDebit(cpf, value);
+        if(debitValue != -1){
+            return debitValue;
+        }else{
+            throw new RuntimeException("Houve um erro inesperado. Não foi possível realizar o pagamento do seu débito");
+        }
+    }
 }

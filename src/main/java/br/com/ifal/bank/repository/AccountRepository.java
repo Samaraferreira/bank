@@ -350,7 +350,7 @@ public class AccountRepository {
         Connection con = new BuidConection().getCon();
         PreparedStatement ps = null;
         ResultSet rs = null;
-        double credit = 0;
+        double debit = 0;
 
         String sqlSelect = "select debit_balance from credit_checking_account where cpf_account = ?";
 
@@ -362,18 +362,96 @@ public class AccountRepository {
             rs = ps.executeQuery();
 
             if(rs.next()){
-                credit = rs.getDouble("debit_balance");
+                debit = rs.getDouble("debit_balance");
             }
 
-            return credit;
+            ps.close();
+            con.close();
+
+            return debit;
         }catch (Exception e){
             if(!e.getMessage().equals("No results were returned by the query.")){
                 System.out.println(e.getMessage());
+                debit = -1;
             }
-            credit = -1;
-            return credit;
+            return debit;
         }
-
     }
-//    public double payCredit(String cpf, double value)
+
+    public double payDebit(String cpf, double value){
+        Connection con = new BuidConection().getCon();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        double balance = 0;
+        double debit = 0;
+
+        String sqlSelect = "select debit_balance db, balance b from credit_checking_account " +
+                "inner join checking_account on cpf_account = owner_id where cpf_account = ?";
+        String sqlUpdateCredit = "update credit_checking_account set debit_balance = ? where cpf_account = ? returning debit_balance";
+        String sqlUpdateAccount = "update checking_account set balance = ? where owner_id = ?";
+
+        try {
+
+            ps = con.prepareStatement(sqlSelect);
+            if(cpf.length() != 11){
+                throw new ArithmeticException("O CPF precisa ser composto de 11 números!");
+            }else{
+                ps.setString(1, cpf);
+            }
+
+            rs = ps.executeQuery();
+
+            if(rs.next()){
+                balance = rs.getDouble("b");
+                debit = rs.getDouble("db");
+            }
+
+            ps.close();
+
+            ps = con.prepareStatement(sqlUpdateCredit);
+
+            if(value > balance){
+                throw new ArithmeticException("Vocẽ não possuí saldo suficiente para realizar o pagamento");
+            }else{
+                balance = balance - value;
+            }
+
+            if(debit < value){
+                throw new ArithmeticException("O valor do pagamento não pode ser superior a débito existente");
+            }else{
+                debit = debit - value;
+            }
+
+            ps.setDouble(1, debit);
+            ps.setString(2, cpf);
+
+            rs = ps.executeQuery();
+
+            if(rs.next()){
+                debit = rs.getDouble(("debit_balance"));
+            }
+
+            ps.close();
+
+            ps = con.prepareStatement(sqlUpdateAccount);
+
+            ps.setDouble(1, balance);
+            ps.setString(2, cpf);
+
+            ps.executeQuery();
+
+            ps.close();
+            con.close();
+
+            return debit;
+
+        }catch(Exception e){
+            if(!e.getMessage().equals("No results were returned by the query.")){
+                System.out.println(e.getMessage());
+                debit = -1;
+            }
+            System.out.println(e.getMessage());
+            return debit;
+        }
+    }
 }

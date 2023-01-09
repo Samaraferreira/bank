@@ -27,7 +27,7 @@ public class Main {
                         2 - Abrir conta
                         0 - Sair""");
                 System.out.print("Selecione uma opção --> ");
-                opInicio = scan.nextInt();
+                opInicio = Integer.parseInt(scan.nextLine());;
 
                 if (opInicio == 0) {
                     break;
@@ -48,7 +48,7 @@ public class Main {
                                     CC - Conta Corrente""");
 
                             System.out.print("Tipo --> ");
-                            String typeAccountAuthentication = scan.nextLine() + scan.nextLine();
+                            String typeAccountAuthentication = scan.nextLine();
 
                             if (!authenticationService.isValidAuthenticationType(typeAccountAuthentication)) {
                                 throw new IllegalArgumentException("Informe um tipo válido de conta!");
@@ -71,7 +71,7 @@ public class Main {
                                     2 - Abrir conta corrente""");
 
                             System.out.print("Tipo --> ");
-                            int opOpenAccount = scan.nextInt();
+                            int opOpenAccount = Integer.parseInt(scan.nextLine());;
 
                             if (opOpenAccount == 1) {
                                 System.out.println(accountService.addSavingsAccount());
@@ -109,20 +109,20 @@ public class Main {
                 if(account.getType().equals("CC")){
                     System.out.print("""
 
-                            3 - Solicitar crédito
-                            4 - Pagar emprestimo""");
+                            4 - Solicitar crédito
+                            5 - Pagar emprestimo""");
                 }
                 System.out.println("\n0 - Logout");
                 System.out.print("Selecione uma opção: ");
                 op = Integer.parseInt(scan.nextLine());
 
                 if(account.getType().equals("CC")) {
-                    if(op < 0 || op > 4){
-                        throw new IllegalArgumentException("Informe uma opção válida");
+                    if(op < 0 || op > 5){
+                        throw new IllegalArgumentException("Informe uma opção válida!");
                     }
                 } else{
-                    if(op < 0 || op > 2){
-                        throw new IllegalArgumentException("Informe uma opção válida");
+                    if(op < 0 || op > 3){
+                        throw new IllegalArgumentException("Informe uma opção válida!");
                     }
                 }
 
@@ -131,16 +131,18 @@ public class Main {
                         double currentBalanceDeposit = accountService.deposit(account);
                         System.out.println("Depósito realizado com sucesso!" +
                                 "\n Saldo atual: R$ " + currentBalanceDeposit);
+                        System.out.println("Obs: É realizado um desconto de 2,5% em cima do valor do depósito " +
+                                "para manutenção da conta corrente.");
                     }
                     case 2 -> {
-                        double currentBalanceWithdraw = accountService.withdraw(account.getType());
+                        double currentBalanceWithdraw = accountService.withdraw(account);
                         if (currentBalanceWithdraw != 0) {
                             System.out.println("Saque realizado com sucesso!" +
                                     "\n Saldo atual: R$ " + currentBalanceWithdraw);
                         }
                     }
                     case 3 -> {
-                        double creditValue = accountService.credit();
+                        double creditValue = accountService.credit(account);
                         System.out.println("Empréstimo realizado com sucesso!");
                         System.out.println("Limite utilizado: R$ "
                                 + creditValue + "/10000.00");
@@ -148,7 +150,15 @@ public class Main {
                     case 4 -> {
                         System.out.println("Pagar emprestimo\n");
                         System.out.println("Débito atual: R$ " + accountService.showDebitAccount(account.getOwner().getCpf()) + "\n");
+
+                        System.out.print("Informe o cpf do proprietário da conta: ");
+                        String cpf = scan.nextLine();
+
                         System.out.print("informe o valor que deseja abater da dívida: ");
+                        double value = Double.parseDouble(scan.nextLine());
+
+                        System.out.println("Pagamento realizado com sucesso!" +
+                                "\nDébito restante: R$ " + accountService.payDebitAccount(cpf, value, account));
                     }
                 }
 
