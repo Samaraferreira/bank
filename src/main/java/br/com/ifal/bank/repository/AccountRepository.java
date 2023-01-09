@@ -5,59 +5,32 @@ import br.com.ifal.bank.model.Account;
 import br.com.ifal.bank.model.CheckingAccount;
 import br.com.ifal.bank.model.SavingsAccount;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class AccountRepository {
-    public Integer insertSavingsAccount(String name, String cpf, String birthDate, double balance, String type) {
+
+    public Integer insertSavingsAccount(String ownerId, double balance, String type){
         Connection con = new BuidConection().getCon();
 
-        Integer idClient = null;
+        Integer accountID = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
-        Integer validationCpf = null;
 
-        String sqlSelect = "select id from savings_account where cpf = ?";
-        String sqlInsert = "insert into savings_account(client_name, cpf, birthDate, balance, type_account) values(?,?,?,?,?) returning id";
-
-        String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
+        String insertAccountQuery = "insert into savings_account(owner_id, balance, type_account) values(?,?,?) returning id";
 
         try {
-            ps = con.prepareStatement(sqlSelect);
 
-            ps.setString(1, cpf);
-
+            ps = con.prepareStatement(insertAccountQuery);
+            ps.setString(1, ownerId);
+            ps.setDouble(2, balance);
+            ps.setString(3, type);
             rs = ps.executeQuery();
 
             if (rs.next()) {
-                validationCpf = rs.getInt("id");
-            }
-
-            if (validationCpf != null) {
-                throw new SQLException("Não é possível cadastrar mais de uma conta poupança com o mesmo cpf");
-            }
-
-            ps.close();
-
-            ps = con.prepareStatement(sqlInsert);
-
-            ps.setString(1, name);
-            ps.setString(2, cpf);
-
-            if (birthDate.length() != 10) {
-                throw new SQLException("A data de nascimento precisa ser composta de" +
-                        " 10 caracteres, incluindo as barras de separação. Ex: 12/04/2003");
-            } else {
-                ps.setString(3, birthDate);
-            }
-
-            ps.setDouble(4, balance);
-            ps.setString(5, type);
-
-
-            rs = ps.executeQuery();
-
-            if (rs.next()) {
-                idClient = rs.getInt("id");
+                accountID = rs.getInt("id");
             }
 
             ps.close();
@@ -73,64 +46,32 @@ public class AccountRepository {
 
             ps.close();
             con.close();
-
-            return idClient;
-        } catch (Exception e) {
+            return accountID;
+        } catch(Exception e){
             System.out.println(e.getMessage());
-            return idClient;
+            return accountID;
         }
     }
 
-    public Integer insertCheckingAccount(String name, String cpf, String birthDate, double balance, String type) {
+    public Integer insertCheckingAccount(String ownerId, double balance, String type){
 
         Connection con = new BuidConection().getCon();
 
-        Integer idClient = null;
+        Integer accountID = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
-        Integer validationCpf = null;
 
-        String sqlSelect = "select id from checking_account where cpf = ?";
-        String sqlInsert = "insert into checking_account(client_name, cpf, birthDate, balance, type_account) values(?,?,?,?,?) returning id";
+        String insertAccountQuery = "insert into checking_account(owner_id, balance, type_account) values(?,?,?) returning id";
 
-        String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
-        try {
-            ps = con.prepareStatement(sqlSelect);
-
-            ps.setString(1, cpf);
-
+        try{
+            ps = con.prepareStatement(insertAccountQuery);
+            ps.setString(1, ownerId);
+            ps.setDouble(2, balance);
+            ps.setString(3, type);
             rs = ps.executeQuery();
 
             if (rs.next()) {
-                validationCpf = rs.getInt("id");
-            }
-
-            if (validationCpf != null) {
-                throw new SQLException("Não é possível cadastrar mais de uma conta corrente com o mesmo cpf");
-            }
-
-            ps.close();
-
-            ps = con.prepareStatement(sqlInsert);
-
-            ps.setString(1, name);
-            ps.setString(2, cpf);
-
-            if (birthDate.length() != 10) {
-                throw new SQLException("A data de nascimento precisa ser composta de" +
-                        " 10 caracteres, incluindo as barras de separação. Ex: 12/04/2003");
-            } else {
-                ps.setString(3, birthDate);
-            }
-
-            ps.setDouble(4, balance);
-            ps.setString(5, type);
-
-
-            rs = ps.executeQuery();
-
-            if (rs.next()) {
-                idClient = rs.getInt("id");
+                accountID = rs.getInt("id");
             }
 
             ps = con.prepareStatement(insertHistory);
@@ -144,110 +85,14 @@ public class AccountRepository {
 
             ps.close();
             con.close();
-
-            return idClient;
-        } catch (Exception e) {
+            return accountID;
+        }catch(Exception e){
             System.out.println(e.getMessage());
-            return idClient;
+            return accountID;
         }
     }
 
-    public Account editAccount(String name, String cpf, String oldCpf, String birthDate, String type) {
-        Connection con = new BuidConection().getCon();
-
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        Account account = null;
-        int idCreditAccount = 0;
-
-        String sqlUpdateSavingsAccount = "update savings_account set client_name = ?, cpf = ?, birthDate = ?" +
-                " where cpf = ? returning client_name, cpf, birthDate";
-
-        String sqlUpdateCheckingAccount = "update Checking_account set client_name = ?, cpf = ?, birthDate = ?" +
-                " where cpf = ? returning client_name, cpf, birthDate";
-
-        String sqlUpdateCreditAccount = "update credit_checking_account set cpf_account = ? where cpf_account = ?" +
-                "returning id";
-
-        String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
-        try {
-
-            if (type.equals("CP")) {
-                ps = con.prepareStatement(sqlUpdateSavingsAccount);
-            } else {
-                ps = con.prepareStatement(sqlUpdateCreditAccount);
-
-                if (cpf.length() != 11) {
-                    throw new ArithmeticException("O CPF precisa ser composto de 11 números!");
-                } else {
-                    ps.setString(1, cpf);
-                }
-
-                ps.setString(2, oldCpf);
-
-                rs = ps.executeQuery();
-
-                if (rs.next()) {
-                    idCreditAccount = rs.getInt("id");
-                }
-
-                ps.close();
-
-                if (idCreditAccount == 0) {
-                    throw new SQLException("Não foi possível atualizar os dados de crédito!");
-                } else {
-                    ps = con.prepareStatement(sqlUpdateCheckingAccount);
-                }
-            }
-
-            ps.setString(1, name);
-
-            if (cpf.length() != 11) {
-                throw new ArithmeticException("O CPF precisa ser composto de 11 números!");
-            } else {
-                ps.setString(2, cpf);
-            }
-
-            if (birthDate.length() != 10) {
-                throw new SQLException("A data de nascimento precisa ser composta de" +
-                        " 10 caracteres, incluindo as barras de separação. Ex: 12/04/2003");
-            } else {
-                ps.setString(3, birthDate);
-            }
-
-            ps.setString(4, oldCpf);
-
-
-            rs = ps.executeQuery();
-
-            if (rs.next()) {
-                if (type.equals("CP")) {
-                    account = new SavingsAccount(rs.getString("client_name"), rs.getString("cpf"), rs.getString("birthdate"));
-                } else {
-                    account = new CheckingAccount(rs.getString("client_name"), rs.getString("cpf"), rs.getString("birthdate"));
-                }
-            }
-
-            ps = con.prepareStatement(insertHistory);
-
-            String movement = "Edição de conta";
-            ps.setString(1, cpf);
-            ps.setString(2, type);
-            ps.setString(3, movement);
-
-            ps.execute();
-
-            ps.close();
-            con.close();
-
-            return account;
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            return account;
-        }
-    }
-
-    public double depositAccount(String type, String cpf, double value) {
+    public double depositAccount(String type, String cpf, double value){
 
         Connection con = new BuidConection().getCon();
 
@@ -262,9 +107,11 @@ public class AccountRepository {
         String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
         try {
 
-            if (type.equals("CP")) {
+            if(type.equals("CP")) {
+                String updateBalanceSavingsQuery = "update savings_account set balance = ? where owner_id = ? returning balance";
+                String selectBalanceSavingsQuery = "select balance from savings_account where owner_id = ?";
 
-                ps = con.prepareStatement(sqlSelect1);
+                ps = con.prepareStatement(selectBalanceSavingsQuery);
                 ps.setString(1, cpf);
 
                 rs = ps.executeQuery();
@@ -276,15 +123,18 @@ public class AccountRepository {
 
                 ps.close();
 
-                ps = con.prepareStatement(sqlUpdate1);
+                ps = con.prepareStatement(updateBalanceSavingsQuery);
 
                 currentBalance = balanceSavings + value;
                 ps.setDouble(1, balanceSavings + value);
 
                 ps.setString(2, cpf);
 
-            } else if (type.equals("CC")) {
-                ps = con.prepareStatement(sqlSelect2);
+            } else if(type.equals("CC")) {
+                String updateBalanceCheckingQuery = "update checking_account set balance = ? where owner_id = ? returning balance";
+                String selectBalanceCheckingQuery = "select balance from checking_account where owner_id = ?";
+
+                ps = con.prepareStatement(selectBalanceCheckingQuery);
                 ps.setString(1, cpf);
 
                 rs = ps.executeQuery();
@@ -296,7 +146,7 @@ public class AccountRepository {
 
                 ps.close();
 
-                ps = con.prepareStatement(sqlUpdate2);
+                ps = con.prepareStatement(updateBalanceCheckingQuery);
 
                 currentBalance = balanceCheckings + value;
                 ps.setDouble(1, currentBalance);
@@ -319,34 +169,29 @@ public class AccountRepository {
             ps.close();
             con.close();
 
-
-
             return currentBalance;
-        } catch (Exception e) {
-            if (!e.getMessage().equals("No results were returned by the query.")) {
+        }catch(Exception e){
+            if(!e.getMessage().equals("No results were returned by the query.")){
                 System.out.println(e.getMessage());
             }
             return currentBalance;
         }
     }
 
-    public double withdrawAccount(String type, String cpf, double value) {
+    public double withdrawAccount(String type, String cpf, double value){
 
         Connection con = new BuidConection().getCon();
 
         double currentBalance = 0;
-
         PreparedStatement ps = null;
-        String sqlUpdate1 = "update savings_account set balance = ? where cpf = ?";
-        String sqlSelect1 = "select balance from savings_account where cpf = ?";
-        String sqlUpdate2 = "update checking_account set balance = ? where cpf = ?";
-        String sqlSelect2 = "select balance from checking_account where cpf = ?";
         ResultSet rs = null;
 
-        String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
-        try {
-            if (type.equals("CP")) {
-                ps = con.prepareStatement(sqlSelect1);
+        try{
+            if(type.equals("CP")) {
+                String updateBalanceSavingsQuery = "update savings_account set balance = ? where owner_id = ? returning balance";
+                String selectBalanceSavingsQuery = "select balance from savings_account where owner_id = ?";
+
+                ps = con.prepareStatement(selectBalanceSavingsQuery);
 
                 ps.setString(1, cpf);
 
@@ -359,9 +204,9 @@ public class AccountRepository {
 
                 ps.close();
 
-                ps = con.prepareStatement(sqlUpdate1);
+                ps = con.prepareStatement(updateBalanceSavingsQuery);
 
-                if (balanceSavings < value) {
+                if(balanceSavings < value){
                     throw new ArithmeticException("O valor do saque não pode ser maior que o saldo!");
                 }
 
@@ -370,8 +215,11 @@ public class AccountRepository {
 
                 ps.setString(2, cpf);
 
-            } else if (type.equals("CC")) {
-                ps = con.prepareStatement(sqlSelect2);
+            } else if(type.equals("CC")) {
+                String updateBalanceCheckingQuery = "update checking_account set balance = ? where owner_id = ? returning balance";
+                String selectBalanceCheckingQuery = "select balance from checking_account where owner_id = ?";
+
+                ps = con.prepareStatement(selectBalanceCheckingQuery);
                 ps.setString(1, cpf);
 
 
@@ -384,9 +232,9 @@ public class AccountRepository {
 
                 ps.close();
 
-                ps = con.prepareStatement(sqlUpdate2);
+                ps = con.prepareStatement(updateBalanceCheckingQuery);
 
-                if (balanceCheckings < value) {
+                if(balanceCheckings < value){
                     throw new ArithmeticException("O valor do saque não pode ser maior que o saldo!");
                 }
 
@@ -415,50 +263,48 @@ public class AccountRepository {
             con.close();
 
             return currentBalance;
-        } catch (Exception e) {
-            if (!e.getMessage().equals("No results were returned by the query.")) {
+        }catch(Exception e){
+            if(!e.getMessage().equals("No results were returned by the query.")){
                 System.out.println(e.getMessage());
             }
             return currentBalance;
         }
     }
 
-    public Account validationAccount(String type, String cpf) {
+    public Account validationAccount(String type, String cpf){
 
         Connection con = new BuidConection().getCon();
 
         PreparedStatement ps = null;
         ResultSet rs = null;
-        String sqlSelect1 = "select client_name, cpf, birthdate from savings_account where cpf = ?";
-        String sqlSelect2 = "select client_name, cpf, birthdate from checking_account where cpf = ?";
+        String selectSavingsOwnerQuery = "select name, cpf, birthdate from savings_account sa inner join owner on (sa.owner_id = owner.cpf) where owner_id = ?";
+        String selectCheckingOwnerQuery = "select name, cpf, birthdate from checking_account ca inner join owner on (ca.owner_id = owner.cpf) where owner_id = ?";
         Account account = null;
 
-        try {
-            if (type.equals("CP")) {
-                ps = con.prepareStatement(sqlSelect1);
+        try{
+            if(type.equals("CP")){
+                ps = con.prepareStatement(selectSavingsOwnerQuery);
 
                 ps.setString(1, cpf);
 
 
                 rs = ps.executeQuery();
 
-                if (rs.next()) {
-                    account = new SavingsAccount(rs.getString("client_name"), rs.getString("cpf"), rs.getString("birthdate"));
+                if(rs.next()){
+                    Owner owner = new Owner(rs.getString("name"), rs.getString("cpf"), rs.getString("birthdate"));
+                    account = new SavingsAccount(owner);
                 }
 
                 ps.close();
-            } else if (type.equals("CC")) {
-                ps = con.prepareStatement(sqlSelect2);
-                if (cpf.length() != 11) {
-                    throw new ArithmeticException("O CPF precisa ser composto de 11 números!");
-                } else {
-                    ps.setString(1, cpf);
-                }
+            }else if(type.equals("CC")){
+                ps = con.prepareStatement(selectCheckingOwnerQuery);
+                ps.setString(1, cpf);
 
                 rs = ps.executeQuery();
 
-                if (rs.next()) {
-                    account = new CheckingAccount(rs.getString("client_name"), rs.getString("cpf"), rs.getString("birthdate"));
+                if(rs.next()){
+                    Owner owner = new Owner(rs.getString("name"), rs.getString("cpf"), rs.getString("birthdate"));
+                    account = new CheckingAccount(owner);
                 }
 
                 ps.close();
@@ -467,55 +313,49 @@ public class AccountRepository {
             con.close();
             return account;
 
-        } catch (Exception e) {
-            if (!e.getMessage().equals("No results were returned by the query.")) {
+        }catch(Exception e){
+            if(!e.getMessage().equals("No results were returned by the query.")){
                 System.out.println(e.getMessage());
             }
             return account;
         }
     }
 
-    public Double getCredit(String cpf, double value) {
+    public Double getCredit(String cpf, double value){
         Connection con = new BuidConection().getCon();
 
         PreparedStatement ps = null;
         ResultSet rs = null;
-        Integer idClient = null;
+        String idClient = null;
         double credit = 0;
 
-        String sqlValidation = "select id from checking_account where cpf = ?";
+        String sqlValidation = "select id, owner_id from checking_account where owner_id = ?";
         String sqlSelect = "select debit_balance from credit_checking_account where cpf_account = ?";
         String sqlInsert = "insert into credit_checking_account(cpf_account, debit_balance)" +
                 "values(?,?) returning debit_balance";
-        String sqlUpdate = "update credit_checking_account set debit_balance = ? where cpf_account = ? " +
-                "returning debit_balance";
-
-        String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
-        try {
+        try{
             ps = con.prepareStatement(sqlValidation);
 
             ps.setString(1, cpf);
 
             rs = ps.executeQuery();
 
-            if (rs.next()) {
-                idClient = rs.getInt("id");
+            if(rs.next()){
+                idClient = rs.getString("owner_id");
             }
 
             ps.close();
 
-            if (idClient == null) {
+            if(idClient == null){
                 throw new SQLException("Não existe nenhuma conta corrente registrada com esse cpf!");
-            } else {
+            }else{
                 ps = con.prepareStatement(sqlSelect);
 
                 ps.setString(1, cpf);
 
                 rs = ps.executeQuery();
-
-
-                if (rs != null) {
-                    if (rs.next()) {
+                if(rs != null){
+                    if(rs.next()){
                         credit = rs.getDouble("debit_balance");
                     }
 
@@ -523,79 +363,53 @@ public class AccountRepository {
 
                     ps = con.prepareStatement(sqlUpdate);
 
-                    if ((credit + value) > 10000) {
+                    if((credit + value) > 10000){
                         throw new ArithmeticException("Limite máximo de crédito atingido. Pague sua fatura ou tente solicitar um valor menor");
-                    } else {
+                    }else{
                         ps.setDouble(1, credit + value);
                         ps.setString(2, cpf);
 
                         rs = ps.executeQuery();
 
-                        if (rs.next()) {
-                            credit = rs.getDouble("debit_balance");
-                        }
-
-
-                        ps.close();
-
-                        ps = con.prepareStatement(insertHistory);
-
-                        String movement = "Solicitacao de credito no valor R$"+ credit+value;
-                        ps.setString(1, cpf);
-                        ps.setString(2, "CC");
-                        ps.setString(3, movement);
-
-                        ps.execute();
-
-                        ps.close();
-                        con.close();
-
-                    }
-
-
-                } else {
-                    ps = con.prepareStatement(sqlInsert);
-
-                    if ((credit + value) > 10000) {
-                        throw new ArithmeticException("Limite máximo de crédito atingido. Pague sua fatura ou tente solicitar um valor menor");
-                    } else {
-                        ps.setString(1, cpf);
-                        ps.setDouble(2, value);
-
-                        rs = ps.executeQuery();
-
-                        if (rs.next()) {
+                        if(rs.next()){
                             credit = rs.getDouble("debit_balance");
                         }
 
                         ps.close();
-                        ps = con.prepareStatement(insertHistory);
-
-                        String movement = "Solicitacao de credito no valor R$"+ value;
-                        ps.setString(1, cpf);
-                        ps.setString(2, "CC");
-                        ps.setString(3, movement);
-
-                        ps.execute();
-
-                        ps.close();
                         con.close();
+
+                }
+                ps = con.prepareStatement(sqlInsert);
+
+                if((credit + value) > 10000){
+                    throw new ArithmeticException("Limite máximo de crédito atingido. Pague sua fatura ou tente solicitar um valor menor");
+                }else{
+                    ps.setString(1, cpf);
+                    ps.setDouble(2, value);
+
+                    rs = ps.executeQuery();
+
+                    if(rs.next()){
+                        credit = rs.getDouble("debit_balance");
                     }
+
+                    ps.close();
+                    con.close();
                 }
             }
 
 
             return credit;
 
-        } catch (Exception e) {
-            if (!e.getMessage().equals("No results were returned by the query.")) {
+        }catch(Exception e){
+            if(!e.getMessage().equals("No results were returned by the query.")){
                 System.out.println(e.getMessage());
             }
             return credit;
         }
     }
 
-    public double showDebit(String cpf) {
+    public double showDebit(String cpf){
 
         Connection con = new BuidConection().getCon();
         PreparedStatement ps = null;
@@ -604,8 +418,6 @@ public class AccountRepository {
 
         String sqlSelect = "select debit_balance from credit_checking_account where cpf_account = ?";
 
-        String insertHistory = "Insert into history(cpf_account, movement) values (?,?)";
-
         try {
             ps = con.prepareStatement(sqlSelect);
 
@@ -613,7 +425,7 @@ public class AccountRepository {
 
             rs = ps.executeQuery();
 
-            if (rs.next()) {
+            if(rs.next()){
                 debit = rs.getDouble("debit_balance");
             }
 
@@ -630,8 +442,8 @@ public class AccountRepository {
             con.close();
 
             return debit;
-        } catch (Exception e) {
-            if (!e.getMessage().equals("No results were returned by the query.")) {
+        }catch (Exception e){
+            if(!e.getMessage().equals("No results were returned by the query.")){
                 System.out.println(e.getMessage());
                 debit = -1;
             }
@@ -640,7 +452,7 @@ public class AccountRepository {
 
     }
 
-    public double payDebit(String cpf, double value) {
+    public double payDebit(String cpf, double value){
         Connection con = new BuidConection().getCon();
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -648,9 +460,9 @@ public class AccountRepository {
         double debit = 0;
 
         String sqlSelect = "select debit_balance db, balance b from credit_checking_account " +
-                "inner join checking_account on cpf_account = cpf where cpf_account = ?";
+                "inner join checking_account on cpf_account = owner_id where cpf_account = ?";
         String sqlUpdateCredit = "update credit_checking_account set debit_balance = ? where cpf_account = ? returning debit_balance";
-        String sqlUpdateAccount = "update checking_account set balance = ? where cpf = ?";
+        String sqlUpdateAccount = "update checking_account set balance = ? where owner_id = ?";
 
         String insertHistory = "Insert into history(cpf_account, movement) values (?,?)";
 
@@ -674,15 +486,15 @@ public class AccountRepository {
 
             ps = con.prepareStatement(sqlUpdateCredit);
 
-            if (value > balance) {
+            if(value > balance){
                 throw new ArithmeticException("Vocẽ não possuí saldo suficiente para realizar o pagamento");
-            } else {
+            }else{
                 balance = balance - value;
             }
 
-            if (debit < value) {
+            if(debit < value){
                 throw new ArithmeticException("O valor do pagamento não pode ser superior a débito existente");
-            } else {
+            }else{
                 debit = debit - value;
             }
 
@@ -691,7 +503,7 @@ public class AccountRepository {
 
             rs = ps.executeQuery();
 
-            if (rs.next()) {
+            if(rs.next()){
                 debit = rs.getDouble(("debit_balance"));
             }
 
@@ -703,7 +515,7 @@ public class AccountRepository {
             ps.setString(2, cpf);
 
             ps.executeQuery();
-            System.out.println("chegou aqui");
+
 
             ps.close();
             ps = con.prepareStatement(insertHistory);
@@ -719,8 +531,8 @@ public class AccountRepository {
 
             return debit;
 
-        } catch (Exception e) {
-            if (!e.getMessage().equals("No results were returned by the query.")) {
+        }catch(Exception e){
+            if(!e.getMessage().equals("No results were returned by the query.")){
                 System.out.println(e.getMessage());
                 debit = -1;
             }

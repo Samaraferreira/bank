@@ -4,6 +4,7 @@ import br.com.ifal.bank.model.Account;
 import br.com.ifal.bank.model.History;
 import br.com.ifal.bank.repository.AccountRepository;
 import br.com.ifal.bank.repository.HistoryRepository;
+import br.com.ifal.bank.repository.OwnerRepository;
 import br.com.ifal.bank.service.AccountService;
 import br.com.ifal.bank.service.AuthenticationService;
 import br.com.ifal.bank.service.HistoryService;
@@ -12,14 +13,15 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
+
     static Scanner scan = new Scanner(System.in);
     static Scanner stringScan = new Scanner(System.in);
     static AuthenticationService authenticationService = new AuthenticationService(new AccountRepository());
-    static AccountService accountService = new AccountService(new AccountRepository());
+    static AccountService accountService = new AccountService(new AccountRepository(), new OwnerRepository());
     static HistoryService historyService = new HistoryService(new HistoryRepository());
 
     public static void main(String[] args) {
-        int opInicio;
+        int opInicio = -1;
 
         for (; ; ) {
             try {
@@ -31,8 +33,7 @@ public class Main {
                         2 - Abrir conta
                         0 - Sair""");
                 System.out.print("Selecione uma opção --> ");
-                //impede o loop infinito
-                opInicio = Integer.parseInt(stringScan.nextLine());
+                opInicio = Integer.parseInt(stringScan.nextLine());;
 
                 if (opInicio == 0) {
                     break;
@@ -53,7 +54,7 @@ public class Main {
                                     CC - Conta Corrente""");
 
                             System.out.print("Tipo --> ");
-                            String typeAccountAuthentication = stringScan.nextLine(); //+ scan.nextLine()
+                            String typeAccountAuthentication = stringScan.nextLine();
 
                             if (!authenticationService.isValidAuthenticationType(typeAccountAuthentication)) {
                                 throw new IllegalArgumentException("Informe um tipo válido de conta!");
@@ -76,7 +77,7 @@ public class Main {
                                     2 - Abrir conta corrente""");
 
                             System.out.print("Tipo --> ");
-                            int opOpenAccount = scan.nextInt();
+                            int opOpenAccount = Integer.parseInt(scan.nextLine());;
 
                             if (opOpenAccount == 1) {
                                 System.out.println(accountService.addSavingsAccount());
@@ -106,12 +107,11 @@ public class Main {
         do {
             try {
                 System.out.println("\n\n-- Acesso a conta ");
-                System.out.println("\nBem vindo(a), " + account.getName() + "\n");
+                System.out.println("\nBem vindo(a), " + account.getOwner().getName() + "\n");
                 System.out.print("""
                         Menu:
                         1 - Realizar depósito
-                        2 - Realizar saque
-                        3 - Editar dados da conta""");
+                        2 - Realizar saque""");
                 if (account.getType().equals("CC")) {
                     System.out.print("""
 
@@ -151,24 +151,15 @@ public class Main {
                                     "\n Saldo atual: R$ " + currentBalanceWithdraw);
                         }
                     }
-
                     case 3 -> {
-                        System.out.print("CPF do proprietário da conta --> ");
-                        String cpf = stringScan.nextLine();
-
-                        account = accountService.editAccount(account, cpf);
-
-                        System.out.println("Dados atualizados com sucesso!");
-                    }
-                    case 4 -> {
                         double creditValue = accountService.credit(account);
                         System.out.println("Empréstimo realizado com sucesso!");
                         System.out.println("Limite utilizado: R$ "
                                 + creditValue + "/10000.00");
                     }
-                    case 5 -> {
+                    case 4 -> {
                         System.out.println("Pagar emprestimo\n");
-                        System.out.println("Débito atual: R$ " + accountService.showDebitAccount(account.getCpf()) + "\n");
+                        System.out.println("Débito atual: R$ " + accountService.showDebitAccount(account.getOwner().getCpf()) + "\n");
 
                         System.out.print("Informe o cpf do proprietário da conta: ");
                         String cpf = stringScan.nextLine();
