@@ -255,7 +255,7 @@ public class AccountRepository {
 
             ps = con.prepareStatement(insertHistory);
 
-            String movement = "Saque de R%" + value + " da conta";
+            String movement = "Saque de R$" + value + " da conta";
             ps.setString(1, cpf);
             ps.setString(2, type);
             ps.setString(3, movement);
@@ -287,7 +287,6 @@ public class AccountRepository {
         String selectCheckingOwnerQuery = "select name, cpf, birthdate from checking_account ca inner join owner on (ca.owner_id = owner.cpf) where owner_id = ?";
         Account account = null;
 
-        String insertHistory = "Insert into history(cpf_account, type_account, movement) values (?,?,?)";
         try {
             if (type.equals("CP")) {
                 ps = con.prepareStatement(selectSavingsOwnerQuery);

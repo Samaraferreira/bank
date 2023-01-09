@@ -17,10 +17,10 @@ public class HistoryService {
     }
 
     public ArrayList<History> getHistory(Account account) {
-        if(!isValidCpf(account.getCpf())) {
+        if(!isValidCpf(account.getOwner().getCpf())) {
             throw new IllegalArgumentException("O CPF precisa ser composto de 11 números!");
         }
 
-        return historyRepository.select(account.getCpf());
+        return historyRepository.select(account.getOwner().getCpf());
     }
 }
